@@ -4,6 +4,7 @@
 // init project
 const express = require("express");
 const bodyParser = require("body-parser");
+const puppeteer = require('puppeteer');
 const app = express();
 const fs = require("fs");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -52,6 +53,7 @@ app.get("/", (request, response) => {
 
 // endpoint to get all the dreams in the database
 app.get("/getDreams", (request, response) => {
+  console.log(temperatura());
   db.all("SELECT * from Dreams", (err, rows) => {
     response.send(JSON.stringify(rows));
   });
@@ -109,3 +111,26 @@ const cleanseString = function(string) {
 var listener = app.listen(process.env.PORT, () => {
   console.log(`Your app is listening on port ${listener.address().port}`);
 });
+
+// endpoint to get all the dreams in the database
+app.get("/temperatura", (request, response) => {
+  temperatura(request, response);
+});
+
+async function temperatura(req, res) {
+  const browser = await puppeteer.launch()
+  const page = await browser.newPage()
+  await page.goto('http://www.meteocentrale.ch/it/europa/svizzera/meteo-corvatsch/details/S067910/')
+
+	const result = await page.evaluate(() => {
+ 	  let temperature = document.querySelector('.column-4').innerText
+    return {
+	    temperature
+	  }
+  })
+  
+  console.log(result)
+  res.send(result);
+  // We close the browser
+  await browser.close();
+}
